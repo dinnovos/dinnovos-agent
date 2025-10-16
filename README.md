@@ -42,19 +42,19 @@ pip install dinnovos-agent[dev]
 ## Quick Start
 
 ```python
-from dinnovos import Dinnovos, OpenAILLM
+from dinnovos import Agent, OpenAILLM
 
 # Create an LLM interface
 llm = OpenAILLM(api_key="your-api-key", model="gpt-4")
 
-# Create a Dinnovos agent
-dinnovos = Dinnovos(
+# Create an Agent
+agent = Agent(
     llm=llm,
     system_prompt="You are a helpful assistant."
 )
 
 # Chat with your agent
-response = dinnovos.chat("Hello! What can you do?")
+response = agent.chat("Hello! What can you do?")
 print(response)
 ```
 
@@ -63,52 +63,52 @@ print(response)
 ### Using Different LLMs
 
 ```python
-from dinnovos import Dinnovos, OpenAILLM, AnthropicLLM, GoogleLLM
+from dinnovos import Agent, OpenAILLM, AnthropicLLM, GoogleLLM
 
 # OpenAI
 openai_llm = OpenAILLM(api_key="sk-...", model="gpt-4")
-dinnovos_gpt = Dinnovos(llm=openai_llm)
+agent_gpt = Agent(llm=openai_llm)
 
 # Anthropic Claude
 anthropic_llm = AnthropicLLM(api_key="sk-ant-...", model="claude-sonnet-4-5-20250929")
-dinnovos_claude = Dinnovos(llm=anthropic_llm)
+agent_claude = Agent(llm=anthropic_llm)
 
 # Google Gemini
 google_llm = GoogleLLM(api_key="...", model="gemini-1.5-pro")
-dinnovos_gemini = Dinnovos(llm=google_llm)
+agent_gemini = Agent(llm=google_llm)
 ```
 
 ### Custom System Prompt
 
 ```python
-dinnovos = Dinnovos(
+agent = Agent(
     llm=llm,
     system_prompt="You are an expert Python programmer.",
     max_history=20  # Keep last 20 messages
 )
 
-response = dinnovos.chat("Explain decorators in Python")
+response = agent.chat("Explain decorators in Python")
 ```
 
 ### Managing Conversation
 
 ```python
 # Get conversation history
-history = dinnovos.get_history()
+history = agent.get_history()
 
 # Reset conversation
-dinnovos.reset()
+agent.reset()
 
 # Change system prompt
-dinnovos.set_system_prompt("You are now a math tutor.")
+agent.set_system_prompt("You are now a math tutor.")
 ```
 
 ## API Reference
 
-### Dinnovos Class
+### Agent Class
 
 ```python
-Dinnovos(llm: BaseLLM, system_prompt: str = None, max_history: int = 10)
+Agent(llm: BaseLLM, system_prompt: str = None, max_history: int = 10)
 ```
 
 **Methods:**
