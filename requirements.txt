@@ -1,0 +1,10 @@
+# Core dependencies (none required for base functionality)
+
+# Optional LLM dependencies - install as needed
+# pip install dinnovos-agent[openai]
+# pip install dinnovos-agent[anthropic]
+# pip install dinnovos-agent[google]
+# pip install dinnovos-agent[all]
+
+# Development dependencies
+# pip install dinnovos-agent[dev]
