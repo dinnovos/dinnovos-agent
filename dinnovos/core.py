@@ -31,52 +31,30 @@ class Agent:
             {"role": "system", "content": self.system_prompt}
         ]
     
-    def chat(
-        self, 
-        content: str = None, 
-        temperature: float = 0.7,
-        history: Optional[List[Dict[str, str]]] = None
-    ) -> str:
+    def chat(self, user_message: str, temperature: float = 0.7) -> str:
         """
         Sends a message to the agent and gets a response.
         
         Args:
             user_message: User's message
             temperature: Temperature for generation
-            history: Optional list of previous messages to use as context.
-                     Format: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
-                     If provided, these messages will be used instead of the internal history.
         
         Returns:
             Agent's response
         """
-        # If history is provided, use it instead of internal messages
-        if history is not None:
-            # Build messages with system prompt + provided history + new user message
-            messages_to_send = [
-                {"role": "system", "content": self.system_prompt}
-            ] + history
-            
-            # Add user message if provided
-            if content is not None:
-                messages_to_send.append({"role": "user", "content": content})
-        else:
-            # Use internal message history
-            self.messages.append({"role": "user", "content": content})
-            messages_to_send = self.messages
+        # Add user message
+        self.messages.append({"role": "user", "content": user_message})
         
         # Get LLM response
-        response = self.llm.call(messages_to_send, temperature=temperature)
+        response = self.llm.call(self.messages, temperature=temperature)
         
-        # Only update internal history if no external history was provided
-        if history is None:
-            # Add assistant response
-            self.messages.append({"role": "assistant", "content": response})
-            
-            # Keep only the last N messages (+ system prompt)
-            if len(self.messages) > self.max_history + 1:
-                # Keep system prompt + last max_history messages
-                self.messages = [self.messages[0]] + self.messages[-(self.max_history):]
+        # Add assistant response
+        self.messages.append({"role": "assistant", "content": response})
+        
+        # Keep only the last N messages (+ system prompt)
+        if len(self.messages) > self.max_history + 1:
+            # Keep system prompt + last max_history messages
+            self.messages = [self.messages[0]] + self.messages[-(self.max_history):]
         
         return response
     
