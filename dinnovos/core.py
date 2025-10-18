@@ -1,6 +1,6 @@
 """Core Dinnovos Agent implementation"""
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Iterator
 from .llms.base import BaseLLM
 
 
@@ -79,6 +79,57 @@ class Agent:
                 self.messages = [self.messages[0]] + self.messages[-(self.max_history):]
         
         return response
+    
+    def chat_stream(
+        self, 
+        content: str = None, 
+        temperature: float = 0.7,
+        history: Optional[List[Dict[str, str]]] = None
+    ) -> Iterator[str]:
+        """
+        Sends a message to the agent and streams the response.
+        
+        Args:
+            content: User's message
+            temperature: Temperature for generation
+            history: Optional list of previous messages to use as context.
+                     Format: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
+                     If provided, these messages will be used instead of the internal history.
+        
+        Yields:
+            Chunks of the agent's response
+        """
+        # If history is provided, use it instead of internal messages
+        if history is not None:
+            # Build messages with system prompt + provided history + new user message
+            messages_to_send = [
+                {"role": "system", "content": self.system_prompt}
+            ] + history
+            
+            # Add user message if provided
+            if content is not None:
+                messages_to_send.append({"role": "user", "content": content})
+        else:
+            # Use internal message history
+            self.messages.append({"role": "user", "content": content})
+            messages_to_send = self.messages
+        
+        # Stream LLM response
+        full_response = ""
+        
+        for chunk in self.llm.stream(messages_to_send, temperature=temperature):
+            full_response += chunk
+            yield chunk
+        
+        # Only update internal history if no external history was provided
+        if history is None:
+            # Add assistant response
+            self.messages.append({"role": "assistant", "content": full_response})
+            
+            # Keep only the last N messages (+ system prompt)
+            if len(self.messages) > self.max_history + 1:
+                # Keep system prompt + last max_history messages
+                self.messages = [self.messages[0]] + self.messages[-(self.max_history):]
     
     def reset(self):
         """Resets the conversation"""
