@@ -26,7 +26,7 @@ class BaseLLM(ABC):
         pass
     
     @abstractmethod
-    def stream(self, messages: List[Dict[str, str]], temperature: float = 0.7) -> Iterator[str]:
+    def call_stream(self, messages: List[Dict[str, str]], temperature: float = 0.7) -> Iterator[str]:
         """
         Abstract method for streaming responses.
         

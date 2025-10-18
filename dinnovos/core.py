@@ -117,7 +117,7 @@ class Agent:
         # Stream LLM response
         full_response = ""
         
-        for chunk in self.llm.stream(messages_to_send, temperature=temperature):
+        for chunk in self.llm.call_stream(messages_to_send, temperature=temperature):
             full_response += chunk
             yield chunk
         

@@ -2,7 +2,9 @@
 
 This guide explains how to use function calling (also known as "tools") with OpenAI in Dinnovos Agent.
 
-## 🚀 Recommended Method: `call_with_function_execution()`
+## 🚀 Recommended Methods
+
+### `call_with_function_execution()` - Standard Execution
 
 **The easiest way** to use function calling is with the `call_with_function_execution()` method, which automatically handles the entire cycle:
 
@@ -75,6 +77,119 @@ print(result["content"])  # Final response
     "finish_reason": "stop"  # Finish reason
 }
 ```
+
+---
+
+### `call_stream_with_function_execution()` - Streaming Execution
+
+**For real-time responses**, use the `call_stream_with_function_execution()` method, which streams responses while automatically executing functions:
+
+```python
+import os
+from dinnovos.llms.openai import OpenAILLM
+
+# 1. Initialize
+llm = OpenAILLM(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4")
+
+# 2. Define functions
+def get_weather(location: str) -> dict:
+    return {"temp": 22, "condition": "sunny"}
+
+available_functions = {"get_weather": get_weather}
+
+# 3. Define tools (same format as above)
+tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "Get the weather",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {"type": "string"}
+            },
+            "required": ["location"]
+        }
+    }
+}]
+
+# 4. Stream with automatic function execution
+for chunk in llm.call_stream_with_function_execution(
+    messages=[{"role": "user", "content": "What's the weather in Bogotá?"}],
+    tools=tools,
+    available_functions=available_functions,
+    verbose=True
+):
+    chunk_type = chunk.get("type")
+    
+    if chunk_type == "text_delta":
+        # Stream text as it arrives
+        print(chunk.get("content"), end="", flush=True)
+    
+    elif chunk_type == "function_call_start":
+        # Function is being called
+        print(f"\n🔧 Calling: {chunk.get('function_name')}")
+    
+    elif chunk_type == "function_call_result":
+        # Function completed
+        print(f"✅ Result: {chunk.get('result')}")
+    
+    elif chunk_type == "final":
+        # Final response
+        print(f"\n\nCompleted in {chunk.get('iterations')} iterations")
+```
+
+### Advantages of Streaming
+
+✅ **Real-time**: See responses as they're generated  
+✅ **Better UX**: Users see progress immediately  
+✅ **Transparent**: See function calls as they happen  
+✅ **Automatic**: Same automatic execution as standard method  
+✅ **Flexible**: Handle different event types as needed  
+
+### Stream Event Types
+
+The streaming method yields dictionaries with different types:
+
+- **`iteration_start`**: New iteration begins
+  - `iteration`: Current iteration number
+  - `content`: Iteration message
+
+- **`text_delta`**: Text chunk from LLM
+  - `content`: Text chunk to display
+  - `iteration`: Current iteration
+
+- **`function_call_start`**: Function is about to be called
+  - `function_name`: Name of the function
+  - `arguments`: Parsed arguments dict
+  - `iteration`: Current iteration
+
+- **`function_call_result`**: Function execution completed
+  - `function_name`: Name of the function
+  - `result`: Function result (string)
+  - `iteration`: Current iteration
+
+- **`final`**: Final response received
+  - `content`: Final text response
+  - `messages`: Complete message history
+  - `function_calls`: All functions called
+  - `iterations`: Total iterations
+  - `context_stats`: Context usage (if manage_context=True)
+
+- **`error`**: Error occurred
+  - `content`: Error message
+  - `iteration`: Current iteration
+
+### Parameters (same as standard method)
+
+- **`messages`**: Initial list of messages
+- **`tools`**: Tool definitions in OpenAI format
+- **`available_functions`**: Dict with executable functions
+- **`tool_choice`**: `"auto"` (default), `"none"`, or specific
+- **`temperature`**: Generation temperature (default: 0.7)
+- **`max_iterations`**: Maximum iterations (default: 5)
+- **`verbose`**: Show debug information (default: False)
+- **`manage_context`**: Enable context management (default: True)
 
 ---
 
@@ -280,6 +395,7 @@ for idx, tool_call_data in tool_calls_buffer.items():
 ## Included Examples
 
 - `openai_function_calling.py`: Complete example with multiple functions
+- `openai_stream_function_calling.py`: Streaming example with automatic function execution
 - `openai_tools.ipynb`: Interactive notebook with step-by-step examples
 
 ## Supported Parameter Types
